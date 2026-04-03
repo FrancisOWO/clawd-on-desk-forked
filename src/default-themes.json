@@ -1,0 +1,55 @@
+{
+  "themes": {
+    "default": {
+      "name": "Default Orange",
+      "colors": {
+        "body": "#DE886D",
+        "eyes": "#000000"
+      }
+    },
+    "blue": {
+      "name": "Ocean Blue",
+      "colors": {
+        "body": "#4A90E2",
+        "eyes": "#1A3A5C"
+      }
+    },
+    "green": {
+      "name": "Forest Green",
+      "colors": {
+        "body": "#4CAF50",
+        "eyes": "#1B5E20"
+      }
+    },
+    "purple": {
+      "name": "Star Purple",
+      "colors": {
+        "body": "#9C27B0",
+        "eyes": "#4A148C"
+      }
+    },
+    "pink": {
+      "name": "Sakura Pink",
+      "colors": {
+        "body": "#F48FB1",
+        "eyes": "#880E4F"
+      }
+    },
+    "dark": {
+      "name": "Dark Mode",
+      "colors": {
+        "body": "#424242",
+        "eyes": "#BDBDBD"
+      }
+    }
+  },
+  "autoAssign": true,
+  "colorMap": {
+    "body": "#DE886D",
+    "eyes": "#000000"
+  },
+  "defaultTheme": "default",
+  "aliases": {
+    "orange": "default"
+  }
+}

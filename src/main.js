@@ -2,9 +2,18 @@ const { app, BrowserWindow, screen, Menu, ipcMain, globalShortcut } = require("e
 const path = require("path");
 const fs = require("fs");
 
+// ── Theme Manager ──
+const ThemeManager = require("./theme-manager");
+let themeManager = null;
+let themeInfo = null;
+
 // ── Autoplay policy: allow sound playback without user gesture ──
 // MUST be set before any BrowserWindow is created (before app.whenReady)
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+
+// ── Parse CLI arguments early ──
+const cliArgs = process.argv.slice(2);
+const cliTheme = cliArgs.find(arg => arg.startsWith("--theme="))?.split("=")[1];
 
 const isMac = process.platform === "darwin";
 const isLinux = process.platform === "linux";
@@ -457,6 +466,9 @@ const _menuCtx = {
   set contextMenuOwner(v) { contextMenuOwner = v; },
   get contextMenu() { return contextMenu; },
   set contextMenu(v) { contextMenu = v; },
+  get themeManager() { return themeManager; },
+  get currentTheme() { return themeManager ? themeManager.getCurrentTheme() : null; },
+  sendToRenderer,
   enableDoNotDisturb: () => enableDoNotDisturb(),
   disableDoNotDisturb: () => disableDoNotDisturb(),
   enterMiniViaMenu: () => enterMiniViaMenu(),
@@ -714,6 +726,17 @@ function createWindow() {
   ipcMain.on("bubble-height", (event, height) => _perm.handleBubbleHeight(event, height));
   ipcMain.on("permission-decide", (event, behavior) => _perm.handleDecide(event, behavior));
 
+  // ── Theme IPC handlers ──
+  ipcMain.handle("get-themes", () => themeManager.getAllThemes());
+  ipcMain.handle("get-current-theme", () => themeManager.getCurrentTheme());
+  ipcMain.handle("set-theme", (_, themeKey) => {
+    const newThemeInfo = themeManager.switchTheme(themeKey);
+    // Notify renderer to reload with new theme
+    sendToRenderer("theme-changed", newThemeInfo);
+    return newThemeInfo;
+  });
+  ipcMain.handle("clear-theme-cache", () => themeManager.clearCache());
+
   initFocusHelper();
   startMainTick();
   startHttpServer();
@@ -722,6 +745,9 @@ function createWindow() {
   // If hooks arrived during startup, respect them instead of forcing idle
   // Also handles crash recovery (render-process-gone → reload)
   win.webContents.on("did-finish-load", () => {
+    // Send theme info to renderer
+    sendToRenderer("theme-init", themeInfo);
+    
     if (_mini.getMiniMode()) {
       sendToRenderer("mini-mode-change", true, _mini.getMiniEdge());
     sendToHitWin("hit-state-sync", { miniMode: true });
@@ -929,6 +955,12 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     permDebugLog = path.join(app.getPath("userData"), "permission-debug.log");
     updateDebugLog = path.join(app.getPath("userData"), "update-debug.log");
+    
+    // Initialize theme manager
+    themeManager = new ThemeManager();
+    themeInfo = themeManager.initialize(cliTheme);
+    console.log(`Clawd: Instance #${themeInfo.instanceId}, Theme "${themeInfo.themeName}"`);
+    
     createWindow();
 
     // Register global shortcut for toggling pet visibility

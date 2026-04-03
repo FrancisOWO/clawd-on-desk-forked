@@ -4,6 +4,54 @@
 
 const container = document.getElementById("pet-container");
 
+// --- Theme support ---
+let themedSvgBasePath = "../assets/svg"; // Default to original SVGs
+let currentThemeInfo = null;
+
+window.electronAPI.onThemeInit((info) => {
+  currentThemeInfo = info;
+  themedSvgBasePath = info.themeDir;
+  console.log(`Theme initialized: ${info.themeName} (instance-${info.instanceId})`);
+  // Reload current SVG with theme path on init
+  if (currentDisplayedSvg) {
+    reloadCurrentSvg();
+  }
+});
+
+window.electronAPI.onThemeChanged((info) => {
+  currentThemeInfo = info;
+  themedSvgBasePath = info.themeDir;
+  console.log(`Theme changed to: ${info.themeName}`);
+  // Reload current SVG with new theme
+  if (currentDisplayedSvg) {
+    reloadCurrentSvg();
+  }
+});
+
+function reloadCurrentSvg() {
+  // Force reload current SVG with new theme path
+  const next = document.createElement("object");
+  next.type = "image/svg+xml";
+  next.id = "clawd";
+  next.style.opacity = "0";
+  
+  const swap = () => {
+    next.style.transition = "none";
+    next.style.opacity = "1";
+    for (const child of [...container.querySelectorAll("object")]) {
+      if (child !== next) child.remove();
+    }
+    clawdEl = next;
+    if (shouldTrackEyes(currentState, currentDisplayedSvg)) {
+      attachEyeTracking(next);
+    }
+  };
+  
+  next.addEventListener("load", swap, { once: true });
+  next.data = `${themedSvgBasePath}/${currentDisplayedSvg}`;
+  container.appendChild(next);
+}
+
 // --- Reaction state (visual side) ---
 const REACT_DRAG_SVG = "clawd-react-drag.svg";
 let isReacting = false;
@@ -103,7 +151,7 @@ function playReaction(svgFile, durationMs) {
   };
 
   next.addEventListener("load", swap, { once: true });
-  next.data = `../assets/svg/${svgFile}`;
+  next.data = `${themedSvgBasePath}/${svgFile}`;
   container.appendChild(next);
   pendingNext = next;
   setTimeout(() => {
@@ -153,7 +201,7 @@ function swapToSvg(svgFile) {
     currentDisplayedSvg = svgFile;
   };
   next.addEventListener("load", swap, { once: true });
-  next.data = `../assets/svg/${svgFile}`;
+  next.data = `${themedSvgBasePath}/${svgFile}`;
   container.appendChild(next);
   pendingNext = next;
   setTimeout(() => {
@@ -236,7 +284,7 @@ window.electronAPI.onStateChange((state, svg) => {
   };
 
   next.addEventListener("load", swap, { once: true });
-  next.data = `../assets/svg/${svg}`;
+  next.data = `${themedSvgBasePath}/${svg}`;
   container.appendChild(next);
   pendingNext = next;
   setTimeout(() => {

@@ -15,7 +15,11 @@ const electron = require("electron");
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 
-const args = process.platform === "linux" ? [".", "--no-sandbox"] : ["."];
+// Build args: pass through CLI arguments to Electron
+const baseArgs = process.platform === "linux" ? [".", "--no-sandbox"] : ["."];
+const userArgs = process.argv.slice(2); // Get user-provided arguments
+const args = [...baseArgs, ...userArgs];
+
 const child = spawn(electron, args, {
   stdio: "inherit",
   env,

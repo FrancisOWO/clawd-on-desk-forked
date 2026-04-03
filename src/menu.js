@@ -102,6 +102,14 @@ const i18n = {
     hidePet: "Hide Clawd",
     toggleShortcut: "Toggle Shortcut: {shortcut}",
     quit: "Quit",
+    theme: "Theme",
+    themeDefaultOrange: "Default Orange",
+    themeOceanBlue: "Ocean Blue",
+    themeForestGreen: "Forest Green",
+    themeStarPurple: "Star Purple",
+    themeSakuraPink: "Sakura Pink",
+    themeDarkMode: "Dark Mode",
+    clearThemeCache: "Clear Theme Cache",
   },
   zh: {
     size: "大小",
@@ -151,6 +159,14 @@ const i18n = {
     hidePet: "隐藏 Clawd",
     toggleShortcut: "切换快捷键: {shortcut}",
     quit: "退出",
+    theme: "主题",
+    themeDefaultOrange: "默认橙",
+    themeOceanBlue: "海洋蓝",
+    themeForestGreen: "森林绿",
+    themeStarPurple: "星空紫",
+    themeSakuraPink: "樱花粉",
+    themeDarkMode: "暗黑模式",
+    clearThemeCache: "清除主题缓存",
   },
 };
 
@@ -329,6 +345,19 @@ module.exports = function initMenu(ctx) {
     }
     items.push(
       { type: "separator" },
+      {
+        label: t("theme"),
+        submenu: [
+          { label: `${t("themeDefaultOrange")} (default)`, type: "radio", checked: ctx.currentTheme?.themeKey === "default", click: () => setTheme("default") },
+          { label: `${t("themeOceanBlue")} (blue)`, type: "radio", checked: ctx.currentTheme?.themeKey === "blue", click: () => setTheme("blue") },
+          { label: `${t("themeForestGreen")} (green)`, type: "radio", checked: ctx.currentTheme?.themeKey === "green", click: () => setTheme("green") },
+          { label: `${t("themeStarPurple")} (purple)`, type: "radio", checked: ctx.currentTheme?.themeKey === "purple", click: () => setTheme("purple") },
+          { label: `${t("themeSakuraPink")} (pink)`, type: "radio", checked: ctx.currentTheme?.themeKey === "pink", click: () => setTheme("pink") },
+          { label: `${t("themeDarkMode")} (dark)`, type: "radio", checked: ctx.currentTheme?.themeKey === "dark", click: () => setTheme("dark") },
+          { type: "separator" },
+          { label: t("clearThemeCache"), click: () => clearThemeCache() },
+        ],
+      },
       ctx.getUpdateMenuItem(),
       { type: "separator" },
       {
@@ -441,6 +470,19 @@ module.exports = function initMenu(ctx) {
           { label: t("large"), type: "radio", checked: ctx.currentSize === "L", click: () => resizeWindow("L") },
         ],
       },
+      {
+        label: t("theme"),
+        submenu: [
+          { label: `${t("themeDefaultOrange")} (default)`, type: "radio", checked: ctx.currentTheme?.themeKey === "default", click: () => setTheme("default") },
+          { label: `${t("themeOceanBlue")} (blue)`, type: "radio", checked: ctx.currentTheme?.themeKey === "blue", click: () => setTheme("blue") },
+          { label: `${t("themeForestGreen")} (green)`, type: "radio", checked: ctx.currentTheme?.themeKey === "green", click: () => setTheme("green") },
+          { label: `${t("themeStarPurple")} (purple)`, type: "radio", checked: ctx.currentTheme?.themeKey === "purple", click: () => setTheme("purple") },
+          { label: `${t("themeSakuraPink")} (pink)`, type: "radio", checked: ctx.currentTheme?.themeKey === "pink", click: () => setTheme("pink") },
+          { label: `${t("themeDarkMode")} (dark)`, type: "radio", checked: ctx.currentTheme?.themeKey === "dark", click: () => setTheme("dark") },
+          { type: "separator" },
+          { label: t("clearThemeCache"), click: () => clearThemeCache() },
+        ],
+      },
       { type: "separator" },
       {
         label: ctx.getMiniMode() ? t("exitMiniMode") : t("miniMode"),
@@ -500,6 +542,26 @@ module.exports = function initMenu(ctx) {
     ctx.lang = newLang;
     rebuildAllMenus();
     ctx.savePrefs();
+  }
+
+  async function setTheme(themeKey) {
+    try {
+      const newTheme = ctx.themeManager.switchTheme(themeKey);
+      // Notify renderer to reload with new theme
+      ctx.sendToRenderer("theme-changed", newTheme);
+      console.log(`Theme switched to: ${newTheme.themeName}`);
+    } catch (err) {
+      console.warn("Failed to switch theme:", err.message);
+    }
+  }
+
+  async function clearThemeCache() {
+    try {
+      ctx.themeManager.clearCache();
+      console.log("Theme cache cleared");
+    } catch (err) {
+      console.warn("Failed to clear theme cache:", err.message);
+    }
   }
 
   function resizeWindow(sizeKey) {
